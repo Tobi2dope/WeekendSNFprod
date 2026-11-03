@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WeekendSNFprod Progress</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: single column report — status strip, commit calendar, 30-day series grid, topic table, curriculum link */
+:root {
+  --bg: #f6f8f7; --surface: #ffffff; --fg: #17201c; --muted: #5d6b65; --line: #dde5e1;
+  --accent: #1f8a5b; --accent-soft: #d6efe2; --warn: #b26a00; --warn-soft: #fbecd3;
+  --h0: #e7ece9; --h1: #9fdcb9; --h2: #45b27c; --h3: #1f8a5b; --planned: #eef2f0;
+  --display: "Instrument Sans", system-ui, sans-serif;
+  --body: "Instrument Sans", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1412; --surface: #161d1a; --fg: #e4ece8; --muted: #93a39c; --line: #26302c;
+  --accent: #4cc38a; --accent-soft: #173327; --warn: #f0a940; --warn-soft: #3a2a10;
+  --h0: #1e2724; --h1: #1d5a3d; --h2: #2f9363; --h3: #4cc38a; --planned: #1a221f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1412; --surface: #161d1a; --fg: #e4ece8; --muted: #93a39c; --line: #26302c;
+  --accent: #4cc38a; --accent-soft: #173327; --warn: #f0a940; --warn-soft: #3a2a10;
+  --h0: #1e2724; --h1: #1d5a3d; --h2: #2f9363; --h3: #4cc38a; --planned: #1a221f; color-scheme: dark }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 32px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+.eyebrow a { color: inherit; }
+h1 { font-family: var(--display); font-size: clamp(26px, 4vw, 34px); line-height: 1.15; margin: 0; text-wrap: balance; font-weight: 700; }
+h2 { font-family: var(--display); font-size: 18px; margin: 0; font-weight: 600; }
+.sub { color: var(--muted); max-width: 68ch; margin: 0; }
+section { display: grid; gap: 14px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; min-width: 0; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+@media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+.kpi { display: grid; gap: 4px; align-content: start; }
+.kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.kpi .val { font-family: var(--mono); font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.kpi .val small { font-size: 15px; color: var(--muted); font-weight: 400; }
+.kpi .note { font-size: 13px; color: var(--muted); }
+.bar { height: 6px; background: var(--h0); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; width: fit-content; }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.ok { background: var(--accent-soft); color: var(--accent); }
+.scroll { overflow-x: auto; }
+#cal { display: block; }
+#cal text { fill: var(--muted); font-family: var(--mono); font-size: 9px; }
+.legend { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+.legend i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+.series { display: grid; grid-template-columns: repeat(10, minmax(0,1fr)); gap: 6px; }
+@media (max-width: 560px) { .series { grid-template-columns: repeat(5, minmax(0,1fr)); } }
+.day { border-radius: 6px; padding: 8px 6px; min-height: 64px; display: grid; gap: 2px; align-content: start; font-size: 11px; line-height: 1.25; border: 1px solid var(--line); background: var(--planned); color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+.day b { font-family: var(--mono); font-size: 12px; color: var(--fg); }
+.day.done { background: var(--accent-soft); border-color: transparent; color: var(--fg); }
+.day.next { border: 2px dashed var(--accent); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+td.mono { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+.two { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); gap: 16px; }
+@media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+ul.map { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ul.map li { display: grid; grid-template-columns: 62px 1fr auto; gap: 10px; align-items: baseline; font-size: 14px; }
+ul.map .d { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.tag { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.tag.y { background: var(--accent-soft); color: var(--accent); }
+.tag.p { background: var(--warn-soft); color: var(--warn); }
+.tag.n { background: var(--h0); color: var(--muted); }
+ol.next { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.foot { font-size: 12px; color: var(--muted); }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow"><a href="https://github.com/Tobi2dope/WeekendSNFprod">github.com/Tobi2dope/WeekendSNFprod</a> · snapshot of main @ cc0f570</div>
+    <h1>WeekendSNFprod progress</h1>
+    <p class="sub">The Daily DSA notebook series: one data structure, one sorting algorithm and one search algorithm per day, on a 30-day plan defined in <code>DSA_Daily/generate_daily_notebook.py</code>.</p>
+  </header>
+
+  <section class="kpis" aria-label="Summary">
+    <div class="panel kpi">
+      <span class="label">Series days done</span>
+      <span class="val">7<small> / 30</small></span>
+      <div class="bar"><i style="width:23.3%"></i></div>
+      <span class="note">23% of the DSA plan</span>
+    </div>
+    <div class="panel kpi">
+      <span class="label">Algorithms built</span>
+      <span class="val">21</span>
+      <span class="note">7 structures, 7 sorts, 7 searches</span>
+    </div>
+    <div class="panel kpi">
+      <span class="label">Code written</span>
+      <span class="val">1,693<small> lines</small></span>
+      <span class="note">Notebook code, comments and blanks excluded</span>
+    </div>
+    <div class="panel kpi">
+      <span class="label">Last commit</span>
+      <span class="val" id="idle">–<small> days ago</small></span>
+      <span class="pill warn" id="idlePill">Paused since Aug 20</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Commit activity, 2026</h2>
+    <div class="panel">
+      <div class="scroll"><svg id="cal" role="img" aria-label="Calendar of commits in 2026: 11 commits, most between August 2 and August 20"></svg></div>
+      <div class="legend" style="margin-top:10px">
+        <span>11 commits on 8 days.</span>
+        <span style="margin-left:auto">Less</span><i style="background:var(--h0)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><span>More</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>30-day DSA plan</h2>
+    <div class="panel" style="display:grid;gap:12px">
+      <div class="series" id="series"></div>
+      <div class="legend"><i style="background:var(--accent-soft)"></i> Done <i style="border:2px dashed var(--accent);background:var(--surface)"></i> Next up <i style="background:var(--planned);border:1px solid var(--line)"></i> Planned</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What each notebook covers</h2>
+    <div class="panel scroll" style="padding:4px 8px">
+      <table>
+        <thead><tr><th>Day</th><th>Data structure</th><th>Sort</th><th>Search</th><th>Committed</th><th style="text-align:right">Code lines</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="foot">Day 2 started 45 days after Day 1. Since then the pace has been one notebook every three days on average (Days 2 to 7 between Aug 2 and Aug 20).</p>
+  </section>
+
+  <section class="two">
+    <div class="panel" style="display:grid;gap:12px">
+      <h2>How it lines up with the 180-day curriculum</h2>
+      <p class="sub" style="font-size:14px">This repo is evidence for Module 1, Week 1 (Python Crash Course). Nothing here yet covers the math or ML days. Tick days off in your <a href="https://claude.ai/artifact/2myvjGzhRXJg3kEe9RSUr7">study tracker</a>, which stays the source of truth.</p>
+      <ul class="map">
+        <li><span class="d">Day 1–2</span><span>Python basics, variables, operators</span><span class="tag y">Shown</span></li>
+        <li><span class="d">Day 3</span><span>Control flow, loops (every sort and search)</span><span class="tag y">Shown</span></li>
+        <li><span class="d">Day 4</span><span>Lists and tuples (<code>data_structures.py</code>)</span><span class="tag y">Shown</span></li>
+        <li><span class="d">Day 5</span><span>Dictionaries and sets (<code>data_structures.py</code>)</span><span class="tag y">Shown</span></li>
+        <li><span class="d">Day 6</span><span>Functions, modules (<code>collections</code>, <code>heapq</code>)</span><span class="tag y">Shown</span></li>
+        <li><span class="d">Day 7</span><span>Project: command-line game</span><span class="tag n">Not in repo</span></li>
+        <li><span class="d">Day 8–36</span><span>Linear algebra, calculus, stats, NumPy, Pandas</span><span class="tag n">Not started</span></li>
+      </ul>
+    </div>
+    <div class="panel" style="display:grid;gap:12px">
+      <h2>Next steps</h2>
+      <ol class="next">
+        <li><strong>Day 8:</strong> Binary Search Tree, Counting Sort, Ternary Search. Run <code>python DSA_Daily/generate_daily_notebook.py</code> to scaffold it.</li>
+        <li>Commit the Day 7 command-line game from the curriculum here so Week 1 is fully on GitHub.</li>
+        <li>Run each notebook and commit it with outputs. All seven are saved without outputs, so a recruiter browsing GitHub sees code but no results.</li>
+        <li>Add a README that explains the series and links each day. The repo has none today.</li>
+      </ol>
+    </div>
+  </section>
+
+  <p class="foot">Data taken from the git history of <code>main</code> on Nov 3, 2026. The "days ago" count updates on its own; everything else is a snapshot. Other repos (CareerPath, Hugging-face-project, Attention-is-all-you-need) are not included.</p>
+</div>
+
+<script>
+(function () {
+  var commits = [
+    ["2026-01-30","Create New Bitmap image.bmp"],
+    ["2026-04-04","Add Python data structures examples"],
+    ["2026-04-04","Delete New Bitmap image.bmp"],
+    ["2026-06-18","Add Day 001 DSA notebook"],
+    ["2026-06-18","Merge pull request #1 (Day 001)"],
+    ["2026-08-02","Day 002"],["2026-08-04","Day 003"],["2026-08-09","Day 004"],
+    ["2026-08-11","Day 005"],["2026-08-17","Day 006"],["2026-08-20","Day 007"]
+  ];
+  var plan = [
+    ["Array","Bubble Sort","Linear Search"],["Singly Linked List","Selection Sort","Jump Search"],
+    ["Doubly Linked List","Insertion Sort","Binary Search"],["Stack","Shell Sort","Sentinel Search"],
+    ["Queue","Merge Sort","Interpolation Search"],["Circular Queue","Quick Sort","Fibonacci Search"],
+    ["Binary Tree","Heap Sort","Exponential Search"],["Binary Search Tree","Counting Sort","Ternary Search"],
+    ["AVL Tree","Radix Sort","Jump Search"],["Hash Table","Bucket Sort","Hash Search"],
+    ["Min/Max-Heap","Comb Sort","Sublist Search"],["Trie","Cocktail Sort","Recursive Search"],
+    ["Graph (adj. list)","Gnome Sort","BFS"],["Graph (matrix)","Odd-Even Sort","DFS"],
+    ["Union-Find","Bitonic Sort","A* Search"],["Segment Tree","Pancake Sort","Ternary Search"],
+    ["Fenwick Tree","Strand Sort","Order-Statistic"],["Sparse Table","Cycle Sort","Meta Binary Search"],
+    ["Skip List","Tim Sort","Interpolation Search"],["Deque","Stooge Sort","Exponential Search"],
+    ["LRU Cache","Sleep Sort","Ternary Search"],["Priority Queue","3-Way Quick Sort","Fibonacci Search"],
+    ["Monotonic Stack","Counting Sort","Hash Search"],["Monotonic Queue","Radix Sort","Binary Search"],
+    ["Suffix Array","MSD Radix Sort","Suffix Search"],["Rope","In-Place Merge Sort","Rope Search"],
+    ["Bloom Filter","Pigeonhole Sort","Bloom Search"],["B-Tree","External Merge Sort","B-Tree Search"],
+    ["Red-Black Tree","Intro Sort","BST Search"],["KD-Tree","Patience Sort","kNN Search"]
+  ];
+  var done = [["2026-06-18",164],["2026-08-02",253],["2026-08-04",267],["2026-08-09",196],["2026-08-11",219],["2026-08-17",294],["2026-08-20",300]];
+  function fmt(s){ var d=new Date(s+"T12:00:00"); return d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
+
+  // Idle counter
+  var last = new Date("2026-08-20T12:00:00"), now = new Date();
+  var idle = Math.max(0, Math.round((now - last) / 864e5));
+  document.getElementById("idle").innerHTML = idle + "<small> days ago</small>";
+  if (idle <= 7) { var p=document.getElementById("idlePill"); p.className="pill ok"; p.textContent="Active this week"; }
+
+  // Series grid
+  var g = document.getElementById("series");
+  plan.forEach(function (d, i) {
+    var el = document.createElement("div");
+    el.className = "day" + (i < 7 ? " done" : i === 7 ? " next" : "");
+    el.innerHTML = "<b>" + String(i+1).padStart(2,"0") + "</b>" + d[0];
+    el.title = "Day " + (i+1) + ": " + d.join(" · ");
+    g.appendChild(el);
+  });
+
+  // Table
+  var tb = document.getElementById("rows");
+  done.forEach(function (r, i) {
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td class='mono'>" + String(i+1).padStart(3,"0") + "</td><td>" + plan[i][0] + "</td><td>" + plan[i][1] + "</td><td>" + plan[i][2] + "</td><td class='mono'>" + fmt(r[0]) + "</td><td class='num'>" + r[1] + "</td>";
+    tb.appendChild(tr);
+  });
+
+  // Contribution calendar Jan 1 – Dec 31 2026
+  var counts = {};
+  commits.forEach(function (c) { counts[c[0]] = (counts[c[0]] || 0) + 1; });
+  var start = new Date(2026,0,1), end = new Date(2026,11,31);
+  var cell = 11, gap = 3, left = 28, top = 16;
+  var svgNS = "http://www.w3.org/2000/svg", svg = document.getElementById("cal");
+  var offset = start.getDay(), weeks = Math.ceil((offset + 365) / 7);
+  var W = left + weeks * (cell + gap), H = top + 7 * (cell + gap);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+  svg.style.width = "100%"; svg.style.minWidth = "640px"; svg.style.height = "auto";
+  ["Mon","Wed","Fri"].forEach(function (t, k) {
+    var tx = document.createElementNS(svgNS,"text"); tx.setAttribute("x",0); tx.setAttribute("y", top + (2*k+1)*(cell+gap) + 9); tx.textContent = t; svg.appendChild(tx);
+  });
+  var lastMonth = -1, today = new Date(); today.setHours(0,0,0,0);
+  for (var d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+    var idx = offset + Math.round((d - start) / 864e5), wk = Math.floor(idx/7), dow = d.getDay();
+    var key = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+    var n = counts[key] || 0;
+    if (d.getMonth() !== lastMonth) {
+      lastMonth = d.getMonth();
+      var mt = document.createElementNS(svgNS,"text"); mt.setAttribute("x", left + wk*(cell+gap)); mt.setAttribute("y", 10);
+      mt.textContent = d.toLocaleDateString("en-US",{month:"short"}); svg.appendChild(mt);
+    }
+    var r = document.createElementNS(svgNS,"rect");
+    r.setAttribute("x", left + wk*(cell+gap)); r.setAttribute("y", top + dow*(cell+gap));
+    r.setAttribute("width", cell); r.setAttribute("height", cell); r.setAttribute("rx", 2);
+    var future = d > today;
+    r.setAttribute("fill", n >= 2 ? "var(--h3)" : n === 1 ? "var(--h2)" : "var(--h0)");
+    if (future) r.setAttribute("opacity", ".35");
+    var tt = document.createElementNS(svgNS,"title");
+    tt.textContent = fmt(key) + ": " + (n ? n + " commit" + (n>1?"s":"") + " (" + commits.filter(function(c){return c[0]===key;}).map(function(c){return c[1];}).join("; ") + ")" : "no commits");
+    r.appendChild(tt); svg.appendChild(r);
+  }
+})();
+</script>
+</body>
+</html>
